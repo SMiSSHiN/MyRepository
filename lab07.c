@@ -8,12 +8,14 @@
 // <<<<<<<<<<<<<<<<<<<<<<<<<Вставка>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 //+++// Вставка в упорядоченный массив
 //+++// Создание нового узла
-// 
+//+++// Отказ при вставке дубликатов
 // <<<<<<<<<<<<<<<<<<<<<<<<<Удаление>>>>>>>>>>>>>>>>>>>>>>>>
 //+++// Поиск
-////Поиск по упорядоченному массиву
-// Поиск соседних
-// <<<<<<<<<<<<<<<<<<Файлы>>>>>>>>>
+//+++//Поиск по упорядоченному массиву
+//???//Поиск соседних
+// <<<<<<<<<<<<<<<<<Delete>>>>>>>>>>>>>>>>
+//// Удаление из упорядоченного массива 
+// <<<<<<<<<<<<<<<<<<Файлы>>>>>>>>>>>>>>>
 // Сохранение в файл
 // Чтение из файла
 //      4)Таймирование
@@ -51,14 +53,16 @@ int getInt(int *);
 
 int median(Item *elements[], unsigned int);
 int areKeysSame(int key[], int find_key[]);
+int binarySearch(Item *elements[], int key[], unsigned depth);
 Node *newNode(Node *);
 void showArray(Item *elements[]);
 void showNode(Node *, int);
 
 Node *insert(Node *, int key[], unsigned int);
-Node *find(Node *, int key[], unsigned depth);
+// Node *find(Node *, int key[], unsigned depth);
+Item *find(Node *, int key[], unsigned depth);
+Item *delete(Node *, int key[], unsigned depth);
 void delTree(Node **);
-// int showTable(Node *root);
 
 int dialog(const char *[], int);
 int addNode(Node *),
@@ -69,7 +73,7 @@ int addNode(Node *),
 
 
 // int (*functions[])(Table *) = {NULL, addItem, findItem, delItem, showTable, timingTree};
-int (*functions[])(Node *) = {NULL, addNode, findNode, NULL, showTree, NULL};
+int (*functions[])(Node *) = {NULL, addNode, findNode, delItem, showTree, NULL};
 
 
 int main(){
@@ -78,9 +82,9 @@ int main(){
 
     root = newNode(root);
 
-    int keys[][k] = {{3,6}, {17,15}, {12, 15}, {1, 1}, {55, 1}, {65, 6}, {5, 6}, {11, 3}, {14, 7}, {0, 7}, {13, 3}, {17, 4}};
+    int keys[][k] = {{1,1}, {3,6}, {8, 4}, {10, 4}, {6, 6}, {7, 8}, {6, 1}, {7, 6}, {4, 1}, {2, 5}, {8, 2}, {2, 9}, {5, 4}, {4, 4}, {3, 3}};
 
-    for(int count = 0; count < 12; count ++)
+    for(int count = 0; count < 15; count ++)
         root = insert(root, keys[count], 0);
 
 
@@ -154,6 +158,46 @@ int areKeysSame(int key[], int find_key[]){
     return 1;
 }
 
+int binarySearch(Item *elements[], int key[], unsigned depth){
+    int count = 0;
+    int m = N -1;
+    int j = 0;
+
+    // // // Разумнее сделать этот кусок //
+    j = (count + m)/2; 
+
+    if(elements[j] == NULL)
+        m = j - 1;
+    else
+        count = j + 1;
+
+    while(count <= m){
+        if(elements[count] == NULL && elements[count - 1] != NULL)
+            break;
+        count ++;
+    }
+
+    m = count - 1;  // Конец массива
+    count = 0;
+    // // // // 
+
+    unsigned cd = depth % k;
+
+    while(count <= m){
+        j = (count + m)/2;
+
+        if(areKeysSame(elements[j] -> key, key))
+            return j;
+
+        if(key[cd] < (elements[j]) -> key[cd])
+            m = j - 1;
+        else
+            count = j + 1;
+    }
+
+    return -1;
+}
+
 Node *newNode(Node *node){
     node = (Node *)malloc(sizeof(Node) * 1);
 
@@ -202,25 +246,13 @@ int dialog(const char *messages[], int n){
 
 int addNode(Node *root){
     int key[k];
-    char *data;
+    // char *data;
 
     int rc = 0;
-    // Node *node = NULL;
+    Node *node = NULL;
+    Item *item = NULL;
 
     const char *error = "";
-
- /*
-    // Поиск по дереву
-    node = find(*root, key);
-
-    // Duplicate key
-    if(!node){
-        rc = 1;
-        printf("%s: %d, %d\n", error_message[rc], key1, key2);
-
-        return 1;
-    }
- */
 
     printf("\nEnter first key --> ");
     do{
@@ -240,14 +272,26 @@ int addNode(Node *root){
             return 0;
     }while (key[1] < -10000 || key[1] >= 10000);
     
+    /*
     printf("Enter data --> ");
     data = getStr();
     if(data == NULL)
         return 0;
+    */
+
+    item = find(root, key, 0);
+    if(item != NULL){
+        rc = 1;
+
+        printf("%s: %d, %d\n", error_message[rc], key[0], key[1]);
+        // free(data);
+
+        return 1;
+    }
 
     root = insert(root, key, 0);
     printf("%s: %d, %d\n", error_message[rc], key[0], key[1]);
-    free(data);
+    // free(data);
 
     return 1;
 }
@@ -256,7 +300,8 @@ int findNode(Node *root){
     int key[k];
     int rc = 0;
 
-    Node *node = NULL;
+    // Node *node = NULL;
+    Item *item = NULL;
 
     const char *error = "";
 
@@ -279,12 +324,53 @@ int findNode(Node *root){
             return 0;
     }while (key[1] < -10000 || key[1] >= 10000);
 
-    node = find(root, key, 0);
-    if(node == NULL)
+    // node = find(root, key, 0);
+    // if(node == NULL)
+    //     rc = 2;
+
+    item = find(root, key, 0);
+    if(item == NULL)
         rc = 2;
+
     printf("\n%s: %d, %d\n", error_message[rc], key[0], key[1]);
 
     return 1;
+}
+
+int delItem(Node *root){
+    int rc = 0;
+    int key[N];
+
+    Item *item = NULL;
+
+    const char *error = "";
+    
+    printf("\n-------------------Delete-------------------|\n");
+    printf("\nEnter first key --> ");
+    do{
+        printf(error);
+        error = "You are wrong. Repeat, please.";
+        if(!getInt(&key[0]))
+            return 0;
+    }while (key[0] < -10000 || key[0] >= 10000);
+    
+    error = "";
+
+    printf("Enter second key --> ");
+    do{
+        printf(error);
+        error = "You are wrong. Repeat, please.";
+        if(!getInt(&key[1]))
+            return 0;
+    }while (key[1] < -10000 || key[1] >= 10000);
+
+    item = delete(root, key, 0);
+    if(item == NULL)
+        rc = 2;
+
+    printf("\n%s: %d, %d\n", error_message[rc], key[0], key[1]);
+
+    return 1;  
 }
 
 Node *insert(Node *root, int key[], unsigned depth){
@@ -292,9 +378,7 @@ Node *insert(Node *root, int key[], unsigned depth){
     int count = 0;
     Item *item = NULL;
 
-    unsigned int cd = depth % k;
-
-    // Поиск
+    unsigned int cd = depth % k; 
 
     // Создаем новый node 
     if(root == NULL)
@@ -336,7 +420,6 @@ Node *insert(Node *root, int key[], unsigned depth){
     if(count == N-1)
         root -> border = median(root -> elements, cd);
  */ 
-    cd = (cd + 1) % k;
 
     if(count == N){
         root -> border = median(root -> elements, cd);
@@ -350,18 +433,15 @@ Node *insert(Node *root, int key[], unsigned depth){
     return root;
 }
 
-Node *find(Node *root, int key[], unsigned depth){
-    int count = 0;
+Item *find(Node *root, int key[], unsigned depth){
+    int position = 0;
 
     if(root == NULL)
         return NULL;
 
-    // Просматривается весь массив, но должен быть поиск по упорядоченному массиву
-    while((count < N) && (root -> elements[count])){
-        if(areKeysSame((root -> elements[count]) -> key, key))
-            return root;
-        count ++;
-    }
+    position = binarySearch(root -> elements, key, depth);
+    if(position >= 0)
+        return root -> elements[position];
 
     unsigned cd = depth % k;
 
@@ -371,21 +451,36 @@ Node *find(Node *root, int key[], unsigned depth){
     return find(root -> right, key, depth + 1);
 }
 
-/*
-int showTable(Node *root){
-    if(root == NULL){
-        printf("---\t[...]\n");
+Item *delete(Node *root, int key[], unsigned depth){
+    int position = 0;
 
-        return 1;
+    if(root == NULL)
+        return NULL;
+
+    position = binarySearch(root -> elements, key, depth);
+    if(position >= 0){
+        free(root -> elements[position]);
+        root -> elements[position] = NULL;
+
+        while(position < N && root -> elements[position + 1]){
+            root -> elements[position] = root -> elements[position + 1];
+            position ++;
+        }
+
+        root -> elements[position - 1] = NULL;
+
+        return root -> elements[position];
     }
 
-    printf("%d ", root -> border);
-    showArray(root -> elements);
+    unsigned cd = depth % k;
 
-    showTable(root -> left);
-    showTable(root -> right);
+    if(key[cd] <= root -> border)
+        return find(root -> left, key, depth + 1);
+    
+    return find(root -> right, key, depth + 1);
+
+
 }
-*/
 
 int showTree(Node *root){
     showNode(root, 0);
