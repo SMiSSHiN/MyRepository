@@ -10,7 +10,7 @@
 //+++// Граничное значение? Массив указаелей? Основные ключи текущего уровня?
 // <<<<<<<<<<<<<<<<<<<<<<<<<Вставка>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 //+++// Вставка в упорядоченный массив
-// // Вставка с данными
+//+++// Вставка с данными
 //+++// Создание нового узла
 //+++// Отказ при вставке дубликатов
 // <<<<<<<<<<<<<<<<<<<<<<<<<Удаление>>>>>>>>>>>>>>>>>>>>>>>>
@@ -99,10 +99,10 @@ int main(){
     
 
 
-    int keys[][k] = {{1,1}, {3,6}, {8, 4}, {7, 8}, {10, 4}, {6, 6}, {8, 2}, {6, 1}, {2, 5}, {4, 1}, {7, 6}, {2, 9}, {5, 4}, {4, 4}, {3, 3}};
+    // int keys[][k] = {{1,1}, {3,6}, {8, 4}, {7, 8}, {10, 4}, {6, 6}, {8, 2}, {6, 1}, {2, 5}, {4, 1}, {7, 6}, {2, 9}, {5, 4}, {4, 4}, {3, 3}};
 
-    for(int count = 0; count < 15; count ++)
-        insert(root, keys[count], 0);
+    // for(int count = 0; count < 15; count ++)
+    //     insert(root, keys[count], 0);
 
     while((rc = dialog(messages, size_messages)))
         if(!functions[rc](root))
@@ -247,14 +247,14 @@ void showArray(Item *elements[]){
     printf("[");
 
     if(elements[count])
-        printf("(%d, %d)", elements[count] -> key[0], elements[count] -> key[1]);
+        printf("(%d, %d, %s)", elements[count] -> key[0], elements[count] -> key[1], elements[count] -> data);
     else
         printf("(-, -)");
     count ++;
 
     while(count < N){
         if(elements[count])
-            printf(" (%d, %d)", elements[count] -> key[0], elements[count] -> key[1]);
+            printf(" (%d, %d, %s)", elements[count] -> key[0], elements[count] -> key[1], elements[count] -> data);
         else
             printf(" (-, -)");
 
@@ -284,7 +284,7 @@ int dialog(const char *messages[], int n){
 
 int addNode(Node *root){
     int key[k];
-    // char *data;
+    char *data;
 
     int rc = 0;
     Item *item = NULL;
@@ -309,24 +309,24 @@ int addNode(Node *root){
             return 0;
     }while (key[1] < -10000 || key[1] >= 10000);
     
-    // printf("Enter data --> ");
-    // data = getStr();
-    // if(data == NULL)
-    //     return 0;
+    printf("Enter data --> ");
+    data = getStr();
+    if(data == NULL)
+        return 0;
 
     item = find(root, key, 0);
     if(item != NULL){
         rc = 1;
 
         printf("%s: %d, %d\n", error_message[rc], key[0], key[1]);
-        // free(data);
+        free(data);
 
         return 1;
     }
 
-    root = insert(root, key, 0);
+    root = insertWithData(root, key, data, 0);
     printf("%s: %d, %d\n", error_message[rc], key[0], key[1]);
-    // free(data);
+    free(data);
 
     return 1;
 }
@@ -508,17 +508,17 @@ Node *insertWithData(Node *root, int key[], char *data, unsigned int depth){
         for(int i = 0; i < k; i++)
             item -> key[i] = key[i];
 
-        // Запись в файл
-        // 
-        //
+        // вставить data
+        item -> data = (char *)malloc(strlen(data) + 1);
+        strcpy(item -> data, data);
     }else{
         if(!root -> left && !root -> right)
             root -> border = median(root -> elements, cd);
 
         if(key[cd] <= (root -> border))
-            root -> left = insert(root -> left, key, depth + 1);
+            root -> left = insertWithData(root -> left, key, data, depth + 1);
         else
-            root -> right = insert(root -> right, key, depth + 1);
+            root -> right = insertWithData(root -> right, key, data, depth + 1);
     }
 
     return root;
@@ -580,7 +580,6 @@ Item *find(Node *root, int key[], unsigned depth){
     return find(root -> right, key, depth + 1);
 }
 
-// Указатели?
 void findNearest(Node *root, int key[], unsigned depth, float *distanse, Item **nearest_item){
     int neighbor[k];
     int count = 0;
